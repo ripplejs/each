@@ -4,10 +4,15 @@
   "description": "Allows nodes to emit events",
   "version": "0.0.1",
   "keywords": [],
-  "dependencies": {},
-  "development": {},
+  "dependencies": {
+
+  },
+  "development": {
+    "component/assert": "*",
+    "ripplejs/ripple": "*",
+    "ianstormtaylor/trigger-event": "*"
+  },
   "license": "MIT",
-  "main": "index.js",
   "scripts": [
     "index.js"
   ]
