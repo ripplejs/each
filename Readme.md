@@ -1,6 +1,8 @@
 
 # events
 
+[![Build Status](https://travis-ci.org/ripplejs/events.png?branch=master)](https://travis-ci.org/ripplejs/events)
+
   Listen for events like click, touch, etc in a template using attributes.
 
 ## Installation
@@ -26,10 +28,10 @@ var events = require('events');
 ripple.use(events);
 
 // Compile the view
-var view = ripple.compile(template);
+var View = ripple.compile(template);
 
 // Listen for the events
-view.on('save', this.save);
+View.event('save', doEeeet);
 ```
 
 ## License
