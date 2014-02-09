@@ -1,41 +1,92 @@
 var ripple = require('ripple')();
 var assert = require('assert');
-var trigger = require('trigger-event');
-var events = require('events');
+var each = require('each');
 
-ripple.use(events);
+ripple.use(each);
 
-describe('events', function(){
+var assertions = 0;
 
-  it('should bind to events', function(done){
-    var View = ripple.compile('<div on-click="foo"></div>');
-    View.event('foo', function(){
-      done();
-    });
-    var view = new View();
-    trigger(view.el, 'click');
+function equal(one, two) {
+  assertions += 1;
+  assert(one === two, ['#'+assertions, one, two].join(' | '));
+}
+
+describe('each', function(){
+  var items, View;
+
+  beforeEach(function(){
+    assertions = 0;
+    items = [{
+      first: 'Fred',
+      last: 'Flintstone'
+    }, {
+      first: 'Barney',
+      last: 'Rubble'
+    }, {
+      first: 'Homer',
+      last: 'Simpson'
+    }];
+    View = ripple.compile('<div foreach-user="users"><div>{{index}} {{user.first}} {{user.last}}</div></div>');
   });
 
-  it('should unbind from events', function(done){
-    var View = ripple.compile('<div on-click="foo"></div>');
-    View.event('foo', function(){
-      done(false);
-    });
-    var view = new View();
-    view.unbind();
-    trigger(view.el, 'click');
-    done();
-  });
+  it('should render a list of items', function(){
+    var view = new View({ users: items });
+    assert(view.el.children.length === 3);
+  })
 
-  it('should rebind to events', function(done){
-    var View = ripple.compile('<div on-click="foo"></div>');
-    View.event('foo', function(){
-      done();
+  it('should add new items', function(){
+    var view = new View({ users: items });
+    items.push({
+      first: 'Bart',
+      last: 'Simpson'
     });
-    var view = new View();
-    view.unbind();
-    view.bind();
-    trigger(view.el, 'click');
-  });
+    equal(view.el.children.length, 4);
+    equal(view.el.children[0].innerHTML, "0 Fred Flintstone");
+    equal(view.el.children[1].innerHTML, "1 Barney Rubble");
+    equal(view.el.children[2].innerHTML, "2 Homer Simpson");
+    equal(view.el.children[3].innerHTML, "3 Bart Simpson");
+  })
+
+  it('should remove items', function(){
+    var view = new View({ users: items });
+    items.pop();
+    equal(view.el.children.length, 2);
+    equal(view.el.children[0].innerHTML, "0 Fred Flintstone");
+    equal(view.el.children[1].innerHTML, "1 Barney Rubble");
+  })
+
+  it('should sort items', function(){
+    var view = new View({ users: items });
+    items.reverse();
+    equal(view.el.children[0].innerHTML, "0 Homer Simpson");
+    equal(view.el.children[1].innerHTML, "1 Barney Rubble");
+    equal(view.el.children[2].innerHTML, "2 Fred Flintstone");
+  })
+
+  it('should render a whole new array', function(){
+    var view = new View({ users: items });
+    view.set('users', [{
+      first: 'Marty',
+      last: 'McFly'
+    }, {
+      first: 'Gus',
+      last: 'Fring'
+    }, {
+      first: 'Walter',
+      last: 'White'
+    }]);
+    equal(view.el.children[0].innerHTML, "0 Marty McFly");
+    equal(view.el.children[1].innerHTML, "1 Gus Fring");
+    equal(view.el.children[2].innerHTML, "2 Walter White");
+  })
+
+  it('should render an array of non-objects', function(){
+    items = ['foo', 'bar', 'baz'];
+    View = ripple.compile('<div foreach-thing="things"><div>{{thing}}</div></div>');
+    var view = new View({ things: items });
+    equal(view.el.children[0].innerHTML, "foo");
+    equal(view.el.children[1].innerHTML, "bar");
+    equal(view.el.children[2].innerHTML, "baz");
+  })
 
 });

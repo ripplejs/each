@@ -1,37 +1,23 @@
 
-# events
+# each
 
-[![Build Status](https://travis-ci.org/ripplejs/events.png?branch=master)](https://travis-ci.org/ripplejs/events)
+[![Build Status](https://travis-ci.org/ripplejs/each.png?branch=master)](https://travis-ci.org/ripplejs/each)
 
-  Listen for events like click, touch, etc in a template using attributes.
+  Allows iteration in templates
 
 ## Installation
 
   Install with [component(1)](http://component.io):
 
-    $ component install ripplejs/events
+    $ component install ripplejs/each
 
 ## API
 
-A template can use `on-*` to emit events on the view.
-
 ```html
-<button on-click="save">Save</button>
-```
-
-This can be any type of event, eg: `on-dblclick`, `on-touch`, `on-keydown`. The node just needs to emit the event after the `on-` portion of the attribute.
-
-```js
-var events = require('events');
-
-// Use the plugin
-ripple.use(events);
-
-// Compile the view
-var View = ripple.compile(template);
-
-// Listen for the events
-View.event('save', doEeeet);
+<div foreach-user="users">
+  <img src="{{user.avatar}}" />
+  {{ user.name }}
+</div>
 ```
 
 ## License

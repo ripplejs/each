@@ -1,16 +1,16 @@
 {
-  "name": "events",
-  "repo": "ripplejs/events",
-  "description": "Allows nodes to emit events",
-  "version": "0.0.2",
+  "name": "each",
+  "repo": "ripplejs/each",
+  "description": "Iterate through an array and render views",
+  "version": "0.0.1",
   "keywords": [],
   "dependencies": {
-
+    "ripplejs/view": "*",
+    "ripplejs/array-observer": "*"
   },
   "development": {
     "component/assert": "*",
-    "ripplejs/ripple": "*",
-    "ianstormtaylor/trigger-event": "*"
+    "ripplejs/ripple": "*"
   },
   "license": "MIT",
   "scripts": [
