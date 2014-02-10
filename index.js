@@ -1,10 +1,20 @@
 var createView = require('view');
 var observe = require('array-observer');
 
+function parseValue(value) {
+  var parts = value.split(' in ');
+  var first = parts[0].split(',');
+  return {
+    property: parts.pop().trim(),
+    key: first[0].trim(),
+    index: (first.length === 2) ? first[1].trim() : false
+  };
+}
+
 module.exports = function(ripple) {
-  ripple.attribute(/foreach-[a-z]+/, function(view, node, attr, value){
+  ripple.attribute('each', function(view, node, attr, value){
+    var parsed = parseValue(value);
     var template = node.innerHTML;
-    var name = attr.replace('foreach-', '');
     var compile = this.compile.bind(this);
     var emitter;
     var views;
@@ -12,8 +22,8 @@ module.exports = function(ripple) {
     function renderItem(item, i) {
       var View = createView(template, compile);
       var data = {};
-      data[name] = item;
-      data.index = i;
+      data[parsed.key] = item;
+      if(parsed.index) data[parsed.index] = i;
       var view = new View(data);
       return view;
     }
@@ -50,7 +60,7 @@ module.exports = function(ripple) {
 
       // The array from the model that we
       // want to render and watch for changes
-      var items = view.get(value);
+      var items = view.get(parsed.property);
 
       // remove the previous emitter so that we don't
       // keep watching the old array for changes
@@ -88,7 +98,7 @@ module.exports = function(ripple) {
     }
 
     node.innerHTML = '';
-    view.state.change(value, change);
+    view.state.change(parsed.property, change);
     change();
   });
 };

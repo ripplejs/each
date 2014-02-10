@@ -26,7 +26,7 @@ describe('each', function(){
       first: 'Homer',
       last: 'Simpson'
     }];
-    View = ripple.compile('<div foreach-user="users"><div>{{index}} {{user.first}} {{user.last}}</div></div>');
+    View = ripple.compile('<div each="user,index in users"><div>{{index}} {{user.first}} {{user.last}}</div></div>');
   });
 
   it('should render a list of items', function(){
@@ -82,7 +82,7 @@ describe('each', function(){
 
   it('should render an array of non-objects', function(){
     items = ['foo', 'bar', 'baz'];
-    View = ripple.compile('<div foreach-thing="things"><div>{{thing}}</div></div>');
+    View = ripple.compile('<div each="thing in things"><div>{{thing}}</div></div>');
     var view = new View({ things: items });
     equal(view.el.children[0].innerHTML, "foo");
     equal(view.el.children[1].innerHTML, "bar");

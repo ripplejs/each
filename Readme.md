@@ -13,8 +13,20 @@
 
 ## API
 
+With optional index property:
+
 ```html
-<div foreach-user="users">
+<div each="user,index in users">
+  Index: {{index}}
+  <img src="{{user.avatar}}" />
+  {{ user.name }}
+</div>
+```
+
+Without index:
+
+```html
+<div each="user in users">
   <img src="{{user.avatar}}" />
   {{ user.name }}
 </div>
