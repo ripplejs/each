@@ -1,4 +1,3 @@
-var createView = require('view');
 var observe = require('array-observer');
 
 function parseValue(value) {
@@ -11,8 +10,8 @@ function parseValue(value) {
   };
 }
 
-module.exports = function(ripple) {
-  ripple.attribute('each', function(view, node, attr, value){
+module.exports = function(View) {
+  View.directive('each', function(view, node, attr, value){
     var parsed = parseValue(value);
     var template = node.innerHTML;
     var compile = this.compile.bind(this);
@@ -20,12 +19,12 @@ module.exports = function(ripple) {
     var views;
 
     function renderItem(item, i) {
-      var View = createView(template, compile);
+      var Child = View.create(template);
       var data = {};
       data[parsed.key] = item;
       if(parsed.index) data[parsed.index] = i;
-      var view = new View(data);
-      return view;
+      var child = new Child(data, view);
+      return child;
     }
 
     function renderItems(items) {
@@ -98,7 +97,7 @@ module.exports = function(ripple) {
     }
 
     node.innerHTML = '';
-    view.state.change(parsed.property, change);
+    view.change(parsed.property, change);
     change();
   });
 };

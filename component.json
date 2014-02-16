@@ -5,12 +5,12 @@
   "version": "0.0.1",
   "keywords": [],
   "dependencies": {
-    "ripplejs/view": "*",
     "ripplejs/array-observer": "*"
   },
   "development": {
     "component/assert": "*",
-    "ripplejs/ripple": "*"
+    "ripplejs/ripple": "0.0.4",
+    "wilsonpage/fastdom": "v0.8.4"
   },
   "license": "MIT",
   "scripts": [
