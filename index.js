@@ -12,35 +12,34 @@ function parseValue(value) {
 
 module.exports = function(View) {
   View.directive('each', function(view, node, attr, value){
+    var compiler = this;
     var parsed = parseValue(value);
     var template = node.innerHTML;
-    var compile = this.compile.bind(this);
     var emitter;
     var views;
 
     function renderItem(item, i) {
-      var Child = View.create(template);
       var data = {};
       data[parsed.key] = item;
       if(parsed.index) data[parsed.index] = i;
-      var child = new Child(data, view);
+      var child = View.create({
+        data: data,
+        index: i,
+        owner: view,
+        template: template
+      });
       return child;
-    }
-
-    function renderItems(items) {
-      return items.map(renderItem);
     }
 
     function destroy(views) {
       views.forEach(function(view){
-        view.unbind();
         view.unmount();
       });
     }
 
     function mount() {
       views.forEach(function(view, i){
-        view.set('index', i);
+        view.set(parsed.index, i);
         view.mount(node);
       });
     }
@@ -75,7 +74,7 @@ module.exports = function(View) {
       }
 
       // An array for view objects for each item in the array
-      views = renderItems(items);
+      views = items.map(renderItem);
 
       // Watch the array for changes
       emitter = observe(items);

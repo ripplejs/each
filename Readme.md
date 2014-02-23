@@ -16,7 +16,7 @@
 With optional index property:
 
 ```html
-<div each="user,index in users">
+<div each="user,index in {{users}}">
   Index: {{index}}
   <img src="{{user.avatar}}" />
   {{ user.name }}
