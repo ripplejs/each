@@ -26,7 +26,7 @@ With optional index property:
 Without index:
 
 ```html
-<div each="user in users">
+<div each="user in {{users}}">
   <img src="{{user.avatar}}" />
   {{ user.name }}
 </div>

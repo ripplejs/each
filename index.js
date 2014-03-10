@@ -1,4 +1,5 @@
 var observe = require('array-observer');
+var dom = require('fastdom');
 
 function parseValue(value) {
   var parts = value.split(' in ');
@@ -13,20 +14,25 @@ function parseValue(value) {
 module.exports = function(View) {
   View.directive('each', function(view, node, attr, value){
     var compiler = this;
+    var fragment = document.createDocumentFragment();
     var parsed = parseValue(value);
     var template = node.innerHTML;
     var emitter;
     var views;
+
+    node.innerHTML = "";
+    node.appendChild(fragment);
 
     function renderItem(item, i) {
       var data = {};
       data[parsed.key] = item;
       if(parsed.index) data[parsed.index] = i;
       var child = View.create({
-        data: data,
-        index: i,
-        owner: view,
-        template: template
+        state: data,
+        props: {
+          index: i
+        },
+        owner: view
       });
       return child;
     }
@@ -40,7 +46,12 @@ module.exports = function(View) {
     function mount() {
       views.forEach(function(view, i){
         view.set(parsed.index, i);
-        view.mount(node);
+        view.mount(fragment, {
+          template: template
+        });
+      });
+      dom.write(function(){
+        node.appendChild(fragment);
       });
     }
 
@@ -53,12 +64,8 @@ module.exports = function(View) {
       destroy(views.splice(index, removed.length));
     }
 
-    function change() {
+    function change(items) {
       node.innerHTML = '';
-
-      // The array from the model that we
-      // want to render and watch for changes
-      var items = view.get(parsed.property);
 
       // remove the previous emitter so that we don't
       // keep watching the old array for changes
@@ -90,13 +97,11 @@ module.exports = function(View) {
       });
 
       // Re-render everything on a sort
-      emitter.on('sort', change);
+      emitter.on('sort', change.bind(null, items));
 
       mount(views);
     }
 
-    node.innerHTML = '';
-    view.change(parsed.property, change);
-    change();
+    this.view.interpolate(parsed.property, change);
   });
 };
