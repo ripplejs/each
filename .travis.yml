@@ -10,7 +10,7 @@ before_script:
   - make build
 
 script:
-  - node node_modules/.bin/mocha-phantomjs /test/index.html
+  - node node_modules/.bin/mocha-phantomjs /test/unit/index.html
 
 notifications:
   email:
