@@ -2,7 +2,6 @@ var ripple = require('ripple');
 var assert = require('assert');
 var each = require('each');
 var dom = require('fastdom');
-
 var assertions = 0;
 
 function equal(one, two) {
@@ -25,69 +24,126 @@ describe('each', function(){
       first: 'Homer',
       last: 'Simpson'
     }];
-    View = ripple('<div each="user,index in {{users}}"><div>{{index}} {{user.first}} {{user.last}}</div></div>');
+    View = ripple('<div each="{{users}}"><div>{{$index}} {{first}} {{last}}</div></div>');
     View.use(each);
   });
 
-  it('should render a list of items', function(done){
-    var view = new View();
-    view.set('users', items);
-    view.mount(document.body);
-    dom.defer(function(){
-      assert(view.el.children.length === 3);
-      view.unmount();
-      done();
+  it('should render a list of items', function(){
+    var view = new View({
+      data: {
+        users: items
+      }
     });
+    view.appendTo(document.body);
+    assert(view.el.children.length === 3);
+    view.destroy();
   })
 
-  it('should add new items', function(done){
-    var view = new View();
-    view.set('users', items);
+  it('should render data from the parent scope', function(done){
+    var Parent = ripple('<div></div>');
+    var View = ripple('<div each="{{users}}">{{foo}}</div>');
+    View.use(each);
+    var parent = new Parent({
+      data: {
+        foo: 'bar'
+      }
+    });
+    var view = new View({
+      scope: parent,
+      data: {
+        users: items
+      }
+    });
+    view.appendTo(document.body);
+    dom.defer(function(){
+      assert(view.el.innerHTML === 'barbarbar');
+      view.destroy();
+      done();
+    });
+  });
+
+  it('should update rendered data from the parent scope', function(done){
+    var Parent = ripple('<div></div>');
+    var View = ripple('<div each="{{users}}">{{foo}}</div>');
+    View.use(each);
+    var parent = new Parent({
+      data: {
+        foo: 'bar'
+      }
+    });
+    var view = new View({
+      scope: parent,
+      data: {
+        users: items
+      }
+    });
+    view.appendTo(document.body);
+    parent.set('foo', 'baz');
+    dom.defer(function(){
+      assert(view.el.innerHTML === 'bazbazbaz');
+      view.destroy();
+      done();
+    });
+  });
+
+  it('should add new items', function(){
+    var view = new View({
+      data: {
+        users: items
+      }
+    });
     items.push({
       first: 'Bart',
       last: 'Simpson'
     });
-    view.mount(document.body);
-    dom.defer(function(){
-      equal(view.el.children.length, 4);
-      equal(view.el.children[0].innerHTML, "0 Fred Flintstone");
-      equal(view.el.children[1].innerHTML, "1 Barney Rubble");
-      equal(view.el.children[2].innerHTML, "2 Homer Simpson");
-      equal(view.el.children[3].innerHTML, "3 Bart Simpson");
-      done();
-    });
+    view.appendTo(document.body);
+    equal(view.el.children.length, 4);
+    equal(view.el.children[0].innerHTML, "0 Fred Flintstone");
+    equal(view.el.children[1].innerHTML, "1 Barney Rubble");
+    equal(view.el.children[2].innerHTML, "2 Homer Simpson");
+    equal(view.el.children[3].innerHTML, "3 Bart Simpson");
+    view.destroy();
   })
 
   it('should remove items', function(done){
-    var view = new View();
-    view.set('users', items);
-    view.mount(document.body);
-    items.pop();
-    dom.defer(function(){
-      equal(view.el.children.length, 2);
-      equal(view.el.children[0].innerHTML, "0 Fred Flintstone");
-      equal(view.el.children[1].innerHTML, "1 Barney Rubble");
-      done();
+    var view = new View({
+      data: {
+        users: items
+      }
     });
+    view.appendTo(document.body);
+    items.pop();
+    equal(view.el.children.length, 2);
+    equal(view.el.children[0].innerHTML, "0 Fred Flintstone");
+    equal(view.el.children[1].innerHTML, "1 Barney Rubble");
+    view.destroy();
+    done();
   })
 
   it('should sort items', function(done){
-    var view = new View();
-    view.set('users', items);
-    view.mount(document.body);
+    var view = new View({
+      data: {
+        users: items
+      }
+    });
+    view.appendTo(document.body);
     items.reverse();
     dom.defer(function(){
       equal(view.el.children[0].innerHTML, "0 Homer Simpson");
       equal(view.el.children[1].innerHTML, "1 Barney Rubble");
       equal(view.el.children[2].innerHTML, "2 Fred Flintstone");
+      view.destroy();
       done();
     });
   })
 
   it('should render a whole new array', function(done){
-    var view = new View();
-    view.set('users', items);
-    view.mount(document.body);
+    var view = new View({
+      data: {
+        users: items
+      }
+    });
+    view.appendTo(document.body);
     view.set('users', [{
       first: 'Marty',
       last: 'McFly'
@@ -102,35 +158,26 @@ describe('each', function(){
       equal(view.el.children[0].innerHTML, "0 Marty McFly");
       equal(view.el.children[1].innerHTML, "1 Gus Fring");
       equal(view.el.children[2].innerHTML, "2 Walter White");
+      view.destroy();
       done();
     });
   })
 
   it('should render an array of non-objects', function(done){
     items = ['foo', 'bar', 'baz'];
-    View = ripple('<div each="thing in {{things}}"><div>{{thing}}</div></div>');
+    View = ripple('<div each="{{things}}"><div>{{$value}}</div></div>');
     View.use(each);
-    var view = new View();
-    view.set('things', items);
-    view.mount(document.body);
+    var view = new View({
+      data: {
+        things: items
+      }
+    });
+    view.appendTo(document.body);
     dom.defer(function(){
       equal(view.el.children[0].innerHTML, "foo");
       equal(view.el.children[1].innerHTML, "bar");
       equal(view.el.children[2].innerHTML, "baz");
-      done();
-    });
-  })
-
-  it.skip('should render with complex expressions', function (done) {
-    items = ['foo', 'bar', 'baz'];
-    View = ripple('<div each="thing in {{ [things.pop()] } }}"><div>{{thing}}</div></div>');
-    View.use(each);
-    var view = new View();
-    view.set('things', items);
-    view.mount(document.body);
-    dom.defer(function(){
-      equal(view.el.children.length, 1);
-      equal(view.el.children[0].innerHTML, "raz");
+      view.destroy();
       done();
     });
   });

@@ -1,107 +1,108 @@
 var observe = require('array-observer');
-var dom = require('fastdom');
-
-function parseValue(value) {
-  var parts = value.split(' in ');
-  var first = parts[0].split(',');
-  return {
-    property: parts.pop().trim(),
-    key: first[0].trim(),
-    index: (first.length === 2) ? first[1].trim() : false
-  };
-}
+var ripple = require('ripple');
 
 module.exports = function(View) {
-  View.directive('each', function(view, node, attr, value){
-    var compiler = this;
-    var fragment = document.createDocumentFragment();
-    var parsed = parseValue(value);
-    var template = node.innerHTML;
-    var emitter;
-    var views;
+  View.directive('each', {
+    bind: function(){
+      this.template = this.node.innerHTML;
+      this.Child = ripple(this.template);
+      this.node.innerHTML = '';
+      this.previous = {};
+    },
+    update: function(items){
+      var self = this;
+      var Child = this.Child;
+      var replacing = false;
+      this.node.innerHTML = '';
 
-    node.innerHTML = "";
-    node.appendChild(fragment);
-
-    function renderItem(item, i) {
-      var data = {};
-      data[parsed.key] = item;
-      if(parsed.index) data[parsed.index] = i;
-      var child = View.create({
-        state: data,
-        props: {
-          index: i
-        },
-        owner: view
-      });
-      return child;
-    }
-
-    function destroy(views) {
-      views.forEach(function(view){
-        view.unmount();
-      });
-    }
-
-    function mount() {
-      views.forEach(function(view, i){
-        view.set(parsed.index, i);
-        view.mount(fragment, {
-          template: template
-        });
-      });
-      dom.write(function(){
-        node.appendChild(fragment);
-      });
-    }
-
-    function add(added, index) {
-      var splice = views.splice.bind(views, index, 0);
-      splice.apply(views, added);
-    }
-
-    function remove(removed, index) {
-      destroy(views.splice(index, removed.length));
-    }
-
-    function change(items) {
-      node.innerHTML = '';
+      // The new value isn't an array.
+      if(Array.isArray(items) === false) {
+        throw new Error(items + ' should be an array');
+      }
 
       // remove the previous emitter so that we don't
       // keep watching the old array for changes
-      if(emitter) emitter.off();
-
-      // If we have an array of views, remove all of them
-      // so that their bindings don't hang around
-      if(views) destroy(views);
-
-      // The new value isn't an array. So just do nothing
-      if(Array.isArray(items) === false) {
-        throw new Error(value + ' should be an array');
+      if(this.previous.emitter) {
+        this.previous.emitter.off();
       }
 
-      // An array for view objects for each item in the array
-      views = items.map(renderItem);
+      // Destroy any old views
+      if(this.previous.items) {
+        this.previous.items.forEach(function(view){
+          view.destroy();
+        });
+      }
 
-      // Watch the array for changes
-      emitter = observe(items);
+      function reposition() {
+        items.forEach(function(view, i){
+          view.set('$index', i).appendTo(self.node);
+        });
+      }
 
-      emitter.on('add', function(added, index){
-        add(added.map(renderItem), index);
-        mount(views);
+      function createViewFromValue(item, i) {
+        var data = {};
+        if(typeof item === 'object') data = item;
+        data.$index = i;
+        data.$value = item;
+        var child = new Child({
+          owner: self.view,
+          scope: self.view,
+          bindings: self.view.bindings,
+          data: data
+        });
+        return child;
+      }
+
+      // Replace all objects in the array with views
+      items.forEach(function(obj, index){
+        var view = createViewFromValue(obj, index);
+        items.splice(index, 1, view);
       });
 
-      emitter.on('remove', function(removed, index){
-        remove(removed, index);
-        mount(views);
+      // Watch the array for changes
+      var emitter = observe(items);
+
+      // Items are added to the array
+      emitter.on('add', function(item, index){
+        if(replacing) return;
+        var view = createViewFromValue(item, index);
+        replacing = true;
+        items.splice(index, 1, view);
+        replacing = false;
+        reposition();
+      });
+
+      // Items are removed from the array
+      emitter.on('remove', function(view){
+        if(view instanceof Child) {
+          view.destroy();
+          reposition();
+        }
       });
 
       // Re-render everything on a sort
-      emitter.on('sort', change.bind(null, items));
+      emitter.on('sort', function(){
+        reposition();
+      });
 
-      mount(views);
+      // Add all of the views to the DOM immediately
+      reposition();
+
+      // Store it so that we can destroy all of the views
+      // if the array is changed
+      this.previous.items = items;
+      this.previous.emitter = emitter;
+    },
+    unbind: function(){
+      if(this.previous.emitter) {
+        this.previous.emitter.off();
+      }
+      if(this.previous.items) {
+        this.previous.items.forEach(function(view){
+          view.destroy();
+        });
+      }
+      this.previous = {};
     }
-
-    this.view.interpolate(parsed.property, change);
   });
 };
