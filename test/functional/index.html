@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  </head>
+  <body>
+    <script id="template" type="text/template">
+    <div>
+      <ul each="{{items}}">
+        <li>{{name}} <span on-click="{{ this.remove.bind(this, $index) }}">Remove</span></li>
+      </ul>
+      <input type="text" ref="name" on-enter="{{ this.add }}" />
+      <button on-click="{{ this.add }}">Add</button>
+      <button on-click="{{ items.reverse.bind(items) }}">Reverse</button>
+      <button on-click="{{ items.sort.bind(items) }}">Sort</button>
+    </div>
+    </script>
+    <script src="../../build/build.js"></script>
+    <script>
+      var ripple = require('ripple');
+      var each = require('each');
+      var events = require('events');
+      var refs = require('refs');
+
+      var List = ripple('#template')
+        .use(each)
+        .use(events)
+        .use(refs);
+
+      List.directive('on-enter', {
+        update: function(fn){
+          var self = this;
+          this.node.addEventListener('keypress', function(e){
+            if(e.which === 13) fn.call(self.view, e);
+          }, true);
+        }
+      });
+
+      List.prototype.remove = function(index){
+        this.data.items.splice(index, 1);
+      };
+
+      List.prototype.add = function(){
+        var name = this.refs.name.value;
+        var item = { name: name };
+        this.data.items.push(item);
+        this.refs.name.value = "";
+      };
+
+      var list = new List({
+        data: {
+          items: [{ "name": "Homer" }]
+        }
+      });
+
+      list.appendTo('body');
+    </script>
+  </body>
+</html>
