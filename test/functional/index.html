@@ -42,9 +42,9 @@
       };
 
       List.prototype.add = function(){
-        var name = this.refs.name.value;
-        var item = { name: name };
-        this.data.items.push(item);
+        this.data.items.push({
+          name: this.refs.name.value
+        });
         this.refs.name.value = "";
       };
 
