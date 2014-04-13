@@ -1,6 +1,6 @@
 {
   "name": "ripplejs-each",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Iterate through an array and render views",
   "main": "dist/ripple-each.js",
   "directories": {
