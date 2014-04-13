@@ -1,0 +1,9 @@
+{
+  "name": "functional-test",
+  "dependencies": {
+    "ripplejs/ripple": "*",
+    "ripplejs/each": "*",
+    "ripplejs/refs": "*",
+    "ripplejs/events": "*"
+  }
+}
