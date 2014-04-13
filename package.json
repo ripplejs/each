@@ -1,0 +1,29 @@
+{
+  "name": "ripplejs-each",
+  "version": "0.1.0",
+  "description": "Iterate through an array and render views",
+  "main": "dist/ripple-each.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ripplejs/each.git"
+  },
+  "keywords": [
+    "view",
+    "reactive",
+    "template",
+    "data-binding",
+    "mvvm",
+    "browser"
+  ],
+  "author": "Anthony Short",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ripplejs/ripple/issues"
+  }
+}
