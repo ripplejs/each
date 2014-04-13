@@ -9,9 +9,9 @@
   },
   "development": {
     "component/assert": "*",
-    "ripplejs/ripple": "0.2.0",
     "ripplejs/events": "*",
     "ripplejs/refs": "*",
+    "ripplejs/ripple": "*",
     "wilsonpage/fastdom": "v0.8.4"
   },
   "license": "MIT",

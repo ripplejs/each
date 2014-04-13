@@ -1,19 +1,17 @@
 var observe = require('array-observer');
-var ripple = require('ripple');
 
 module.exports = function(View) {
   View.directive('each', {
-    bind: function(){
-      this.template = this.node.innerHTML;
-      this.Child = ripple(this.template);
-      this.node.innerHTML = '';
+    bind: function(el){
+      this.template = el.innerHTML;
+      el.innerHTML = '';
       this.previous = {};
     },
-    update: function(items){
+    update: function(items, el, view){
+      var template = this.template;
       var self = this;
-      var Child = this.Child;
       var replacing = false;
-      this.node.innerHTML = '';
+      el.innerHTML = '';
 
       // The new value isn't an array.
       if(Array.isArray(items) === false) {
@@ -44,10 +42,10 @@ module.exports = function(View) {
         if(typeof item === 'object') data = item;
         data.$index = i;
         data.$value = item;
-        var child = new Child({
-          owner: self.view,
-          scope: self.view,
-          bindings: self.view.bindings,
+        var child = new View({
+          template: template,
+          owner: view,
+          scope: view,
           data: data
         });
         return child;
@@ -74,7 +72,7 @@ module.exports = function(View) {
 
       // Items are removed from the array
       emitter.on('remove', function(view){
-        if(view instanceof Child) {
+        if(view instanceof View) {
           view.destroy();
           reposition();
         }
@@ -105,4 +103,4 @@ module.exports = function(View) {
       this.previous = {};
     }
   });
-};
+}
