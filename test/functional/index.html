@@ -8,7 +8,7 @@
     <script id="template" type="text/template">
     <div>
       <ul each="{{items}}">
-        <li>{{name}} <span on-click="{{ this.remove.bind(this, $index) }}">Remove</span></li>
+        <li>{{name}} <span on-click="{{ this.removeItem.bind(this, $index) }}">Remove</span></li>
       </ul>
       <input type="text" ref="name" on-enter="{{ this.add }}" />
       <button on-click="{{ this.add }}">Add</button>
@@ -37,7 +37,7 @@
         }
       });
 
-      List.prototype.remove = function(index){
+      List.prototype.removeItem = function(index){
         this.data.items.splice(index, 1);
       };
 
