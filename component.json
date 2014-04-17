@@ -1,11 +1,8 @@
 {
   "name": "each",
-  "repo": "ripplejs/each",
-  "description": "Iterate through an array and render views",
   "version": "0.2.0",
-  "keywords": [],
   "dependencies": {
-    "ripplejs/array-observer": "*"
+    "ripplejs/array-observer": "0.3.0"
   },
   "development": {
     "component/assert": "*",
@@ -14,7 +11,6 @@
     "ripplejs/ripple": "*",
     "wilsonpage/fastdom": "v0.8.4"
   },
-  "license": "MIT",
   "scripts": [
     "index.js"
   ]

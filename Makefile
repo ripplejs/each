@@ -18,5 +18,6 @@ standalone:
 	sed 's/this\[\"ripple-each\"\]/this.ripple.each/g' build/standalone.js > dist/ripple-each.js
 	rm build/standalone.js
 	minify dist/ripple-each.js dist/ripple-each.min.js
+	bfc ./dist/ripple-each.js > ./dist/tmp.js && mv ./dist/tmp.js ./dist/ripple-each.js
 
 .PHONY: clean test standalone

@@ -8,8 +8,8 @@
  * @api public
  */
 
-function require(path, parent, orig) {
-  var resolved = require.resolve(path);
+function _require(path, parent, orig) {
+  var resolved = _require.resolve(path);
 
   // lookup failed
   if (null == resolved) {
@@ -18,11 +18,11 @@ function require(path, parent, orig) {
     var err = new Error('Failed to require "' + orig + '" from "' + parent + '"');
     err.path = orig;
     err.parent = parent;
-    err.require = true;
+    err._require = true;
     throw err;
   }
 
-  var module = require.modules[resolved];
+  var module = _require.modules[resolved];
 
   // perform real require()
   // by invoking the module's
@@ -32,7 +32,7 @@ function require(path, parent, orig) {
     mod.exports = {};
     mod.client = mod.component = true;
     module._resolving = true;
-    module.call(this, mod.exports, require.relative(resolved), mod);
+    module.call(this, mod.exports, _require.relative(resolved), mod);
     delete module._resolving;
     module.exports = mod.exports;
   }
@@ -44,13 +44,13 @@ function require(path, parent, orig) {
  * Registered modules.
  */
 
-require.modules = {};
+_require.modules = {};
 
 /**
  * Registered aliases.
  */
 
-require.aliases = {};
+_require.aliases = {};
 
 /**
  * Resolve `path`.
@@ -66,7 +66,7 @@ require.aliases = {};
  * @api private
  */
 
-require.resolve = function(path) {
+_require.resolve = function(path) {
   if (path.charAt(0) === '/') path = path.slice(1);
 
   var paths = [
@@ -79,8 +79,8 @@ require.resolve = function(path) {
 
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
-    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
+    if (_require.modules.hasOwnProperty(path)) return path;
+    if (_require.aliases.hasOwnProperty(path)) return _require.aliases[path];
   }
 };
 
@@ -93,7 +93,7 @@ require.resolve = function(path) {
  * @api private
  */
 
-require.normalize = function(curr, path) {
+_require.normalize = function(curr, path) {
   var segs = [];
 
   if ('.' != path.charAt(0)) return path;
@@ -120,8 +120,8 @@ require.normalize = function(curr, path) {
  * @api private
  */
 
-require.register = function(path, definition) {
-  require.modules[path] = definition;
+_require.register = function(path, definition) {
+  _require.modules[path] = definition;
 };
 
 /**
@@ -132,11 +132,11 @@ require.register = function(path, definition) {
  * @api private
  */
 
-require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
+_require.alias = function(from, to) {
+  if (!_require.modules.hasOwnProperty(from)) {
     throw new Error('Failed to alias "' + from + '", it does not exist');
   }
-  require.aliases[to] = from;
+  _require.aliases[to] = from;
 };
 
 /**
@@ -147,8 +147,8 @@ require.alias = function(from, to) {
  * @api private
  */
 
-require.relative = function(parent) {
-  var p = require.normalize(parent, '..');
+_require.relative = function(parent) {
+  var p = _require.normalize(parent, '..');
 
   /**
    * lastIndexOf helper.
@@ -168,7 +168,7 @@ require.relative = function(parent) {
 
   function localRequire(path) {
     var resolved = localRequire.resolve(path);
-    return require(resolved, parent, path);
+    return _require(resolved, parent, path);
   }
 
   /**
@@ -178,7 +178,7 @@ require.relative = function(parent) {
   localRequire.resolve = function(path) {
     var c = path.charAt(0);
     if ('/' == c) return path.slice(1);
-    if ('.' == c) return require.normalize(p, path);
+    if ('.' == c) return _require.normalize(p, path);
 
     // resolve deps by returning
     // the dep in the nearest "deps"
@@ -195,12 +195,12 @@ require.relative = function(parent) {
    */
 
   localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
+    return _require.modules.hasOwnProperty(localRequire.resolve(path));
   };
 
   return localRequire;
 };
-require.register("component-emitter/index.js", function(exports, require, module){
+_require.register("component-emitter/index.js", function(exports, _require, module){
 
 /**
  * Expose `Emitter`.
@@ -367,13 +367,16 @@ Emitter.prototype.hasListeners = function(event){
 };
 
 });
-require.register("ripplejs-array-observer/index.js", function(exports, require, module){
-var Emitter = require('emitter');
+_require.register("ripplejs-array-observer/index.js", function(exports, _require, module){
+var emitter = _require('emitter');
 var slice = Array.prototype.slice;
 
 module.exports = function(arr) {
 
-  var emitter = new Emitter();
+  /**
+   * Make array an event emitter
+   */
+  emitter(arr);
 
   /**
    * Add an element to the end of the collection.
@@ -383,10 +386,12 @@ module.exports = function(arr) {
    */
 
   function push() {
+    var self = this;
     var startIndex = this.length;
     var result = Array.prototype.push.apply(this, arguments);
     this.slice(startIndex, this.length).forEach(function(value, i){
-      emitter.emit('add', value, (startIndex + i));
+      self.emit('add', value, (startIndex + i));
+      self.emit('change');
     });
     return result;
   }
@@ -401,7 +406,8 @@ module.exports = function(arr) {
   function pop() {
     var startIndex = this.length;
     var result = Array.prototype.pop.apply(this, arguments);
-    emitter.emit('remove', result, startIndex - 1);
+    this.emit('remove', result, startIndex - 1);
+    this.emit('change');
     return result;
   }
 
@@ -415,7 +421,8 @@ module.exports = function(arr) {
   function shift() {
     var startIndex = this.length;
     var result = Array.prototype.shift.apply(this, arguments);
-    emitter.emit('remove', result, 0);
+    this.emit('remove', result, 0);
+    this.emit('change');
     return result;
   }
 
@@ -426,10 +433,12 @@ module.exports = function(arr) {
    */
 
   function unshift() {
+    var self = this;
     var length = this.length;
     var result = Array.prototype.unshift.apply(this, arguments);
     this.slice(0, this.length - length).forEach(function(value, i){
-      emitter.emit('add', value, i);
+      self.emit('add', value, i);
+      self.emit('change');
     });
     return result;
   }
@@ -446,17 +455,19 @@ module.exports = function(arr) {
    */
 
   function splice(index, length) {
+    var self = this;
     var removed = Array.prototype.splice.apply(this, arguments);
     if (removed.length) {
       removed.forEach(function(value, i){
-        emitter.emit('remove', value, index + i);
+        self.emit('remove', value, index + i);
       });
     }
     if (arguments.length > 2) {
       slice.call(arguments, 2).forEach(function(value, i){
-        emitter.emit('add', value, index + i);
+        self.emit('add', value, index + i);
       });
     }
+    this.emit('change');
     return removed;
   }
 
@@ -468,7 +479,8 @@ module.exports = function(arr) {
 
   function reverse() {
     var result = Array.prototype.reverse.apply(this, arguments);
-    emitter.emit('sort');
+    this.emit('sort');
+    this.emit('change');
     return result;
   }
 
@@ -480,7 +492,8 @@ module.exports = function(arr) {
 
   function sort() {
     var result = Array.prototype.sort.apply(this, arguments);
-    emitter.emit('sort');
+    this.emit('sort');
+    this.emit('change');
     return result;
   }
 
@@ -498,28 +511,24 @@ module.exports = function(arr) {
     arr[method] = methods[method];
   }
 
-  emitter.data = arr;
-
-  return emitter;
+  return arr;
 };
 });
-require.register("each/index.js", function(exports, require, module){
-var observe = require('array-observer');
-var ripple = require('ripple');
+_require.register("each/index.js", function(exports, _require, module){
+var observe = _require('array-observer');
 
 module.exports = function(View) {
   View.directive('each', {
-    bind: function(){
-      this.template = this.node.innerHTML;
-      this.Child = ripple(this.template);
-      this.node.innerHTML = '';
+    bind: function(el){
+      this.template = el.innerHTML;
+      el.innerHTML = '';
       this.previous = {};
     },
-    update: function(items){
+    update: function(items, el, view){
+      var template = this.template;
       var self = this;
-      var Child = this.Child;
       var replacing = false;
-      this.node.innerHTML = '';
+      el.innerHTML = '';
 
       // The new value isn't an array.
       if(Array.isArray(items) === false) {
@@ -550,10 +559,10 @@ module.exports = function(View) {
         if(typeof item === 'object') data = item;
         data.$index = i;
         data.$value = item;
-        var child = new Child({
-          owner: self.view,
-          scope: self.view,
-          bindings: self.view.bindings,
+        var child = new View({
+          template: template,
+          owner: view,
+          scope: view,
           data: data
         });
         return child;
@@ -580,7 +589,7 @@ module.exports = function(View) {
 
       // Items are removed from the array
       emitter.on('remove', function(view){
-        if(view instanceof Child) {
+        if(view instanceof View) {
           view.destroy();
           reposition();
         }
@@ -611,17 +620,15 @@ module.exports = function(View) {
       this.previous = {};
     }
   });
-};
+}
 });
-require.alias("ripplejs-array-observer/index.js", "each/deps/array-observer/index.js");
-require.alias("ripplejs-array-observer/index.js", "each/deps/array-observer/index.js");
-require.alias("ripplejs-array-observer/index.js", "array-observer/index.js");
-require.alias("component-emitter/index.js", "ripplejs-array-observer/deps/emitter/index.js");
-
-require.alias("ripplejs-array-observer/index.js", "ripplejs-array-observer/index.js");if (typeof exports == "object") {
-  module.exports = require("each");
+_require.alias("ripplejs-array-observer/index.js", "each/deps/array-observer/index.js");
+_require.alias("ripplejs-array-observer/index.js", "array-observer/index.js");
+_require.alias("component-emitter/index.js", "ripplejs-array-observer/deps/emitter/index.js");
+if (typeof exports == "object") {
+  module.exports = _require("each");
 } else if (typeof define == "function" && define.amd) {
-  define([], function(){ return require("each"); });
+  define([], function(){ return _require("each"); });
 } else {
-  this.ripple.each = require("each");
+  this.ripple.each = _require("each");
 }})();
