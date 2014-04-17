@@ -1,6 +1,6 @@
 {
   "name": "each",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "dependencies": {
     "ripplejs/array-observer": "0.3.0"
   },
