@@ -182,4 +182,42 @@ describe('each', function(){
     });
   });
 
+  it('should not call lifecycle methods on child views', function () {
+    var i = 0;
+    View.created(function(){
+      i++;
+    });
+    var view = new View({
+      data: {
+        users: items
+      }
+    });
+    view.appendTo(document.body);
+    assert(view.el.children.length === 3);
+    view.destroy();
+    assert(i === 1);
+  });
+
+  it('should render items passed down from the parent', function (done) {
+    var Parent = ripple('<div><child items="{{items}}"></child></div>');
+    var Child = ripple('<ul each="{{items}}"><li>{{name}}</li></ul>');
+    Child.use(each);
+    Parent.compose('child', Child);
+    var parent = new Parent({
+      data: {
+        items: [
+          { name: 'One' },
+          { name: 'Two' },
+          { name: 'Three' }
+        ]
+      }
+    });
+    assert(parent.el.querySelectorAll('ul').length > 0, 'should have a ul');
+    assert(parent.el.querySelectorAll('li').length === 3);
+    assert(parent.el.querySelectorAll('li')[0].innerHTML === 'One');
+    assert(parent.el.querySelectorAll('li')[1].innerHTML === 'Two');
+    assert(parent.el.querySelectorAll('li')[2].innerHTML === 'Three');
+    done();
+  });
+
 });

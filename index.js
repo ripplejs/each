@@ -3,12 +3,12 @@ var observe = require('array-observer');
 module.exports = function(View) {
   View.directive('each', {
     bind: function(el){
-      this.template = el.innerHTML;
+      this.View = View.create(el.innerHTML);
       el.innerHTML = '';
       this.previous = {};
     },
     update: function(items, el, view){
-      var template = this.template;
+      var Child = this.View;
       var self = this;
       var replacing = false;
       el.innerHTML = '';
@@ -42,8 +42,7 @@ module.exports = function(View) {
         if(typeof item === 'object') data = item;
         data.$index = i;
         data.$value = item;
-        var child = new View({
-          template: template,
+        var child = new Child({
           owner: view,
           scope: view,
           data: data
@@ -72,7 +71,7 @@ module.exports = function(View) {
 
       // Items are removed from the array
       emitter.on('remove', function(view){
-        if(view instanceof View) {
+        if(view instanceof Child) {
           view.destroy();
           reposition();
         }

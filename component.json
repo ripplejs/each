@@ -8,7 +8,7 @@
     "component/assert": "*",
     "ripplejs/events": "*",
     "ripplejs/refs": "*",
-    "ripplejs/ripple": "*",
+    "ripplejs/ripple": "0.4.0",
     "wilsonpage/fastdom": "v0.8.4"
   },
   "scripts": [
