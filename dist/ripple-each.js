@@ -1,40 +1,22 @@
+
 ;(function(){
 
 /**
- * Require the given path.
+ * Require the module at `name`.
  *
- * @param {String} path
+ * @param {String} name
  * @return {Object} exports
  * @api public
  */
 
-function _require(path, parent, orig) {
-  var resolved = _require.resolve(path);
+function _require(name) {
+  var module = _require.modules[name];
+  if (!module) throw new Error('failed to require "' + name + '"');
 
-  // lookup failed
-  if (null == resolved) {
-    orig = orig || path;
-    parent = parent || 'root';
-    var err = new Error('Failed to require "' + orig + '" from "' + parent + '"');
-    err.path = orig;
-    err.parent = parent;
-    err._require = true;
-    throw err;
-  }
-
-  var module = _require.modules[resolved];
-
-  // perform real require()
-  // by invoking the module's
-  // registered function
-  if (!module._resolving && !module.exports) {
-    var mod = {};
-    mod.exports = {};
-    mod.client = mod.component = true;
-    module._resolving = true;
-    module.call(this, mod.exports, _require.relative(resolved), mod);
-    delete module._resolving;
-    module.exports = mod.exports;
+  if (!('exports' in module) && typeof module.definition === 'function') {
+    module.client = module.component = true;
+    module.definition.call(this, module.exports = {}, module);
+    delete module.definition;
   }
 
   return module.exports;
@@ -47,160 +29,33 @@ function _require(path, parent, orig) {
 _require.modules = {};
 
 /**
- * Registered aliases.
- */
-
-_require.aliases = {};
-
-/**
- * Resolve `path`.
+ * Register module at `name` with callback `definition`.
  *
- * Lookup:
- *
- *   - PATH/index.js
- *   - PATH.js
- *   - PATH
- *
- * @param {String} path
- * @return {String} path or null
- * @api private
- */
-
-_require.resolve = function(path) {
-  if (path.charAt(0) === '/') path = path.slice(1);
-
-  var paths = [
-    path,
-    path + '.js',
-    path + '.json',
-    path + '/index.js',
-    path + '/index.json'
-  ];
-
-  for (var i = 0; i < paths.length; i++) {
-    var path = paths[i];
-    if (_require.modules.hasOwnProperty(path)) return path;
-    if (_require.aliases.hasOwnProperty(path)) return _require.aliases[path];
-  }
-};
-
-/**
- * Normalize `path` relative to the current path.
- *
- * @param {String} curr
- * @param {String} path
- * @return {String}
- * @api private
- */
-
-_require.normalize = function(curr, path) {
-  var segs = [];
-
-  if ('.' != path.charAt(0)) return path;
-
-  curr = curr.split('/');
-  path = path.split('/');
-
-  for (var i = 0; i < path.length; ++i) {
-    if ('..' == path[i]) {
-      curr.pop();
-    } else if ('.' != path[i] && '' != path[i]) {
-      segs.push(path[i]);
-    }
-  }
-
-  return curr.concat(segs).join('/');
-};
-
-/**
- * Register module at `path` with callback `definition`.
- *
- * @param {String} path
+ * @param {String} name
  * @param {Function} definition
  * @api private
  */
 
-_require.register = function(path, definition) {
-  _require.modules[path] = definition;
+_require.register = function (name, definition) {
+  _require.modules[name] = {
+    definition: definition
+  };
 };
 
 /**
- * Alias a module definition.
+ * Define a module's exports immediately with `exports`.
  *
- * @param {String} from
- * @param {String} to
+ * @param {String} name
+ * @param {Generic} exports
  * @api private
  */
 
-_require.alias = function(from, to) {
-  if (!_require.modules.hasOwnProperty(from)) {
-    throw new Error('Failed to alias "' + from + '", it does not exist');
-  }
-  _require.aliases[to] = from;
-};
-
-/**
- * Return a require function relative to the `parent` path.
- *
- * @param {String} parent
- * @return {Function}
- * @api private
- */
-
-_require.relative = function(parent) {
-  var p = _require.normalize(parent, '..');
-
-  /**
-   * lastIndexOf helper.
-   */
-
-  function lastIndexOf(arr, obj) {
-    var i = arr.length;
-    while (i--) {
-      if (arr[i] === obj) return i;
-    }
-    return -1;
-  }
-
-  /**
-   * The relative require() itself.
-   */
-
-  function localRequire(path) {
-    var resolved = localRequire.resolve(path);
-    return _require(resolved, parent, path);
-  }
-
-  /**
-   * Resolve relative to the parent.
-   */
-
-  localRequire.resolve = function(path) {
-    var c = path.charAt(0);
-    if ('/' == c) return path.slice(1);
-    if ('.' == c) return _require.normalize(p, path);
-
-    // resolve deps by returning
-    // the dep in the nearest "deps"
-    // directory
-    var segs = parent.split('/');
-    var i = lastIndexOf(segs, 'deps') + 1;
-    if (!i) i = 0;
-    path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
-    return path;
+_require.define = function (name, exports) {
+  _require.modules[name] = {
+    exports: exports
   };
-
-  /**
-   * Check if module is defined at `path`.
-   */
-
-  localRequire.exists = function(path) {
-    return _require.modules.hasOwnProperty(localRequire.resolve(path));
-  };
-
-  return localRequire;
 };
-_require.register("component-emitter/index.js", function(exports, _require, module){
+_require.register("component~emitter@1.1.2", function (exports, module) {
 
 /**
  * Expose `Emitter`.
@@ -367,8 +222,9 @@ Emitter.prototype.hasListeners = function(event){
 };
 
 });
-_require.register("ripplejs-array-observer/index.js", function(exports, _require, module){
-var emitter = _require('emitter');
+
+_require.register("ripplejs~array-observer@0.3.0", function (exports, module) {
+var emitter = _require("component~emitter@1.1.2");
 var slice = Array.prototype.slice;
 
 module.exports = function(arr) {
@@ -514,18 +370,19 @@ module.exports = function(arr) {
   return arr;
 };
 });
-_require.register("each/index.js", function(exports, _require, module){
-var observe = _require('array-observer');
+
+_require.register("each", function (exports, module) {
+var observe = _require("ripplejs~array-observer@0.3.0");
 
 module.exports = function(View) {
   View.directive('each', {
     bind: function(el){
-      this.template = el.innerHTML;
+      this.View = View.create(el.innerHTML);
       el.innerHTML = '';
       this.previous = {};
     },
     update: function(items, el, view){
-      var template = this.template;
+      var Child = this.View;
       var self = this;
       var replacing = false;
       el.innerHTML = '';
@@ -559,8 +416,7 @@ module.exports = function(View) {
         if(typeof item === 'object') data = item;
         data.$index = i;
         data.$value = item;
-        var child = new View({
-          template: template,
+        var child = new Child({
           owner: view,
           scope: view,
           data: data
@@ -589,7 +445,7 @@ module.exports = function(View) {
 
       // Items are removed from the array
       emitter.on('remove', function(view){
-        if(view instanceof View) {
+        if(view instanceof Child) {
           view.destroy();
           reposition();
         }
@@ -622,13 +478,12 @@ module.exports = function(View) {
   });
 }
 });
-_require.alias("ripplejs-array-observer/index.js", "each/deps/array-observer/index.js");
-_require.alias("ripplejs-array-observer/index.js", "array-observer/index.js");
-_require.alias("component-emitter/index.js", "ripplejs-array-observer/deps/emitter/index.js");
+
 if (typeof exports == "object") {
   module.exports = _require("each");
 } else if (typeof define == "function" && define.amd) {
   define([], function(){ return _require("each"); });
 } else {
   this.ripple.each = _require("each");
-}})();
+}
+})()
