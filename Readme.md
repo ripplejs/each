@@ -2,7 +2,8 @@
 
 [![Build Status](https://travis-ci.org/ripplejs/each.png?branch=master)](https://travis-ci.org/ripplejs/each)
 
-  Allows iteration in templates
+  Allows iteration in templates. Works with ripple <=0.4.0. The ripplejs/list plugin will handle lists in a better way for 0.5.0 onwards.
+
 
 ## Installation
 
